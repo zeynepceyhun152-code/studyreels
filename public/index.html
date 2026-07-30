@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyReels AI Pro - Clean Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { darkMode: 'class' };
+    </script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 m-0 p-0 overflow-hidden font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Expanded reel pool showcasing ALL 3 distinct types (POV, AI Footage, Avatar) with rich gradient backgrounds
+        const INITIAL_REELS = [
+          {
+            id: 1,
+            type: "pov",
+            topic: "Calculus Final Prep",
+            script: "POV: You thought derivatives were hard until your professor explained them like a car speedometer.",
+            description: "A derivative tells you how fast something is changing at one exact moment. Just like a speedometer shows your speed at a single instant (not your average speed for the whole trip), a derivative shows the instantaneous rate of change of a function at one specific point on its curve.",
+            sourceQuote: "Derivatives measure instantaneous rate of change.",
+            bgGradient: "bg-gradient-to-tr from-rose-500 via-pink-500 to-amber-400 text-white shadow-xl",
+            quiz: { question: "What does instantaneous rate of change correspond to?", options: ["Total mileage", "Speedometer reading at 1 sec", "Gas capacity", "Tire pressure"], correctIndex: 1 },
+            semanticTags: ["Math", "STEM", "POV"]
+          },
+          {
+            id: 2,
+            type: "ai_footage",
+            topic: "AP Biology - Mitochondria",
+            script: "Inside your cellular matrix: glucose molecules are shredded into high-energy ATP packets.",
+            description: "Cellular respiration is how cells convert food into usable energy. Glucose is broken down step by step, mostly inside the mitochondria, and the energy released is captured in molecules of ATP — the cell's main energy currency, used to power nearly everything the cell does.",
+            sourceQuote: "Cellular respiration breaks down glucose to generate ATP.",
+            bgGradient: "bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-900 text-white shadow-xl",
+            quiz: { question: "Where does this primary energy extraction happen?", options: ["Nucleus", "Ribosome", "Mitochondria", "Cell Wall"], correctIndex: 2 },
+            semanticTags: ["Biology", "STEM", "AI Footage"]
+          },
+          {
+            id: 3,
+            type: "avatar",
+            topic: "World History - Cold War",
+            script: "Professor Maya here! Remember, the Cold War wasn't just fought with tanks; it was fought through economic aid and proxy flashpoints.",
+            description: "The Cold War (1947-1991) was a rivalry between the US and USSR that rarely involved direct combat between the two powers. Instead, it played out through proxy wars in other countries, economic aid used to win allies, an arms race, and propaganda — a conflict fought through influence rather than open battle.",
+            sourceQuote: "Geopolitical rivalry post-WWII manifested in proxy conflicts.",
+            bgGradient: "bg-gradient-to-tr from-indigo-600 via-blue-600 to-slate-900 text-white shadow-xl",
+            quiz: { question: "Main conflict mechanism described?", options: ["Total nuclear war", "Proxy conflicts & economic aid", "Naval blockades only", "Peace treaties"], correctIndex: 1 },
+            semanticTags: ["Humanities", "Avatar-Led"]
+          },
+          {
+            id: 4,
+            type: "pov",
+            topic: "Quantum Physics",
+            script: "POV: You realize electrons can be in two places at once until someone looks at them.",
+            description: "Quantum superposition means a particle like an electron doesn't have one fixed state until it's measured — it exists as a combination of multiple possible states at once. The act of measuring it is what forces it to 'choose' one definite outcome.",
+            sourceQuote: "Quantum superposition allows particles to exist in multiple states simultaneously.",
+            bgGradient: "bg-gradient-to-br from-violet-600 via-purple-700 to-fuchsia-800 text-white shadow-xl",
+            quiz: { question: "What phenomenon explains this?", options: ["Gravity", "Superposition", "Friction", "Inertia"], correctIndex: 1 },
+            semanticTags: ["STEM", "POV"]
+          },
+          {
+            id: 5,
+            type: "ai_footage",
+            topic: "Cellular Respiration Explained",
+            videoUrl: "/videos/cellular_respiration.mp4",
+            description: "Cellular respiration converts glucose into usable energy in three stages: glycolysis in the cytoplasm, the Krebs cycle in the mitochondria, and the electron transport chain, which produces the bulk of the cell's ATP — roughly 36 molecules from a single glucose molecule.",
+            sourceQuote: "Glycolysis, the Krebs cycle, and the electron transport chain together convert glucose into ATP.",
+            bgGradient: "bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-900 text-white shadow-xl",
+            quiz: { question: "Which stage produces the majority of a cell's ATP?", options: ["Electron transport chain", "Glycolysis", "Krebs cycle", "Fermentation"], correctIndex: 0 },
+            semanticTags: ["Biology", "STEM", "AI Footage"]
+          }
+        ];
+
+        function StudyReelsApp() {
+          const [authView, setAuthView] = useState("welcome");
+          const [currentUser, setUser] = useState(null);
+          
+          const [usernameInput, setUsername] = useState("");
+          const [passwordInput, setPassword] = useState("");
+          const [nameInput, setNameInput] = useState("");
+          const [gradeInput, setGradeInput] = useState("");
+          const [currInput, setCurrInput] = useState("");
+          const [signupClassList, setSignupClassList] = useState("");
+          const [signupBio, setSignupBio] = useState("");
+          const [signupPic, setSignupPic] = useState(null);
+          const [signupStep, setSignupStep] = useState(1);
+
+          const [activeTab, setActiveTab] = useState("workspace");
+          
+          const [editName, setEditName] = useState("");
+          const [editGrade, setEditGrade] = useState("");
+          const [editCurr, setEditCurr] = useState("");
+          const [editClassList, setEditClassList] = useState("");
+          const [editBio, setEditBio] = useState("");
+          const [editPic, setEditPic] = useState(null);
+
+          const [notes, setNotes] = useState([
+            { id: 101, title: "Calculus Limits & Slopes", content: "Derivatives represent the instantaneous slope of a tangent line." },
+            { id: 102, title: "Cellular Respiration", content: "Mitochondria convert glucose and oxygen into ATP packets." }
+          ]);
+          const [noteTitle, setNoteTitle] = useState("");
+          const [noteContent, setNoteContent] = useState("");
+          const [isGenerating, setIsGenerating] = useState(false);
+          const [generateError, setGenerateError] = useState(null);
+
+          const [reelsPool, setReelsPool] = useState([]);
+          const [selectedTagFilter, setSelectedTagFilter] = useState("All");
+          const [likedReels, setLikedReels] = useState([]);
+          const [currentIndex, setCurrentIndex] = useState(0);
+
+          // Friends / Study Buddy state
+          const [friends, setFriends] = useState([]);
+          const [incomingRequests, setIncomingRequests] = useState([]);
+          const [sentRequests, setSentRequests] = useState([]);
+          const [buddySuggestions, setBuddySuggestions] = useState([]);
+          const [friendSearchQuery, setFriendSearchQuery] = useState("");
+          const [friendSearchResults, setFriendSearchResults] = useState([]);
+          const [sharedInbox, setSharedInbox] = useState([]);
+          const [showShareModal, setShowShareModal] = useState(false);
+          const [shareStatus, setShareStatus] = useState(null);
+          const [viewingFriend, setViewingFriend] = useState(null);
+
+          // Study Buddy AI chat state
+          const [studyBuddyMessages, setStudyBuddyMessages] = useState([]);
+          const [studyBuddyInput, setStudyBuddyInput] = useState("");
+          const [studyBuddyLoading, setStudyBuddyLoading] = useState(false);
+
+          // Dark mode
+          const [darkMode, setDarkMode] = useState(false);
+          useEffect(() => {
+            document.documentElement.classList.toggle('dark', darkMode);
+          }, [darkMode]);
+
+          // Common classes (tick-to-preload demo reels) + tag filter menu
+          const COMMON_CLASSES = [
+            { key: "Math", label: "📐 Math" },
+            { key: "Biology", label: "🧬 Biology" },
+            { key: "Humanities", label: "📜 Humanities" },
+            { key: "STEM", label: "⚛️ Science" }
+          ];
+          const [signupCommonClasses, setSignupCommonClasses] = useState([]);
+          const [editCommonClasses, setEditCommonClasses] = useState([]);
+          const [showTagFilterMenu, setShowTagFilterMenu] = useState(false);
+
+          const toggleClassPick = (key, list, setList) => {
+            setList(list.includes(key) ? list.filter(k => k !== key) : [...list, key]);
+          };
+
+          const EMOJI_AVATARS = ["🙂", "😎", "🤓", "🦉", "🐱", "🐼", "🚀", "🌟", "🎓", "📚"];
+
+          const Avatar = ({ pic, size = "w-8 h-8" }) => (
+            <div className={`${size} rounded-full bg-slate-200 dark:bg-slate-600 border border-slate-300 dark:border-slate-500 flex items-center justify-center overflow-hidden shrink-0`}>
+              {pic
+                ? (pic.startsWith('data:') ? <img src={pic} alt="" className="w-full h-full object-cover" /> : <span className="text-base leading-none">{pic}</span>)
+                : <span className="text-xs">🙂</span>}
+            </div>
+          );
+
+          // Modals & Quizzes
+          const [showSource, setShowSource] = useState(false);
+          const [showExplain, setShowExplain] = useState(false);
+          const [showTrust, setShowTrust] = useState(false);
+          const [showQuiz, setShowQuiz] = useState(false);
+          const [quizReel, setQuizReel] = useState(null);
+          const [quizSelected, setQuizSelected] = useState(null);
+          const [quizSubmitted, setQuizSubmitted] = useState(false);
+
+          const [authError, setAuthError] = useState(null);
+
+          const readFileAsDataUrl = (file) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+
+          const handlePicSelect = async (e, setter) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+            try {
+              const dataUrl = await readFileAsDataUrl(file);
+              setter(dataUrl);
+            } catch (err) {
+              console.error("Couldn't read image:", err.message);
+            }
+          };
+
+          const isDefaultReel = (r) => INITIAL_REELS.some(ir => ir.id === r.id);
+
+          const rebuildReelsPool = (user) => {
+            setReelsPool(prev => {
+              const custom = prev.filter(r => !isDefaultReel(r));
+              const classes = (user && user.commonClasses) || [];
+              const defaults = classes.length > 0 ? INITIAL_REELS.filter(r => r.semanticTags.some(t => classes.includes(t))) : [];
+              return [...custom, ...defaults];
+            });
+          };
+
+          const handleAuthSubmit = async (e, isSignUp) => {
+            e.preventDefault();
+            setAuthError(null);
+            const endpoint = isSignUp ? '/api/auth/signup' : '/api/auth/signin';
+            const payload = isSignUp
+              ? { username: usernameInput, password: passwordInput, name: nameInput, grade: gradeInput, curriculum: currInput, classList: signupClassList, bio: signupBio, profilePic: signupPic, commonClasses: signupCommonClasses }
+              : { username: usernameInput, password: passwordInput };
+
+            try {
+              const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+              });
+              const data = await res.json();
+              if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Authentication failed');
+              }
+              setUser(data.user);
+              setEditName(data.user.name || "");
+              setEditGrade(data.user.grade || "");
+              setEditCurr(data.user.curriculum || "");
+              setEditClassList(data.user.classList || "");
+              setEditBio(data.user.bio || "");
+              setEditPic(data.user.profilePic || null);
+              setEditCommonClasses(data.user.commonClasses || []);
+              setLikedReels(data.user.likedReels || []);
+              rebuildReelsPool(data.user);
+              setSignupStep(1);
+              setAuthView("app");
+            } catch (err) {
+              setAuthError(err.message);
+            }
+          };
+
+          const handleUpdateProfile = async (e) => {
+            e.preventDefault();
+            try {
+              const res = await fetch('/api/user/update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser.username, name: editName, grade: editGrade, curriculum: editCurr, classList: editClassList, bio: editBio, profilePic: editPic, commonClasses: editCommonClasses })
+              });
+              const data = await res.json();
+              if (!res.ok || !data.success) throw new Error(data.error || 'Update failed');
+              setUser(data.user);
+              rebuildReelsPool(data.user);
+              alert("Profile saved!");
+            } catch (err) {
+              alert("Couldn't save profile: " + err.message);
+            }
+          };
+
+          const handleLikeReel = async (reel) => {
+            const alreadyLiked = likedReels.some(r => r.id === reel.id);
+            setLikedReels(alreadyLiked ? likedReels.filter(r => r.id !== reel.id) : [...likedReels, reel]);
+
+            if (!currentUser) return;
+            try {
+              const res = await fetch('/api/user/like', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser.username, reel })
+              });
+              const data = await res.json();
+              if (res.ok && data.success) setLikedReels(data.likedReels);
+            } catch (err) {
+              console.error("Like sync failed (kept local):", err.message);
+            }
+          };
+
+          const justGeneratedIdRef = useRef(null);
+
+          const handleUploadNotes = async (e) => {
+            e.preventDefault();
+            if (!noteTitle || !noteContent) return;
+            setIsGenerating(true);
+            setGenerateError(null);
+
+            try {
+              const res = await fetch('/api/ai/generate-reel', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic: noteTitle, content: noteContent })
+              });
+              const data = await res.json();
+              if (!res.ok || !data.success) {
+                throw new Error(data.error || 'Reel generation failed');
+              }
+
+              justGeneratedIdRef.current = data.reel.id;
+              setReelsPool([data.reel, ...reelsPool]);
+              setNotes([{ id: Date.now(), title: noteTitle, content: noteContent }, ...notes]);
+              setNoteTitle("");
+              setNoteContent("");
+              setCurrentIndex(0);
+              setActiveTab("reels");
+            } catch (err) {
+              console.error(err);
+              setGenerateError("Couldn't reach the AI backend — is the server running? (" + err.message + ")");
+            } finally {
+              setIsGenerating(false);
+            }
+          };
+
+          // ── Friends / Study Buddy handlers ─────────────────────────────
+          const fetchFriendsData = async () => {
+            if (!currentUser) return;
+            try {
+              const res = await fetch('/api/friends/list', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser.username })
+              });
+              const data = await res.json();
+              if (data.success) {
+                setFriends(data.friends);
+                setIncomingRequests(data.incomingRequests);
+                setSentRequests(data.sentRequests);
+              }
+            } catch (err) { console.error("Friends fetch failed:", err.message); }
+          };
+
+          const fetchBuddySuggestions = async () => {
+            if (!currentUser) return;
+            try {
+              const res = await fetch('/api/friends/suggest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser.username })
+              });
+              const data = await res.json();
+              if (data.success) setBuddySuggestions(data.suggestions);
+            } catch (err) { console.error("Buddy suggest failed:", err.message); }
+          };
+
+          const fetchSharedInbox = async () => {
+            if (!currentUser) return;
+            try {
+              const res = await fetch('/api/reels/inbox', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser.username })
+              });
+              const data = await res.json();
+              if (data.success) setSharedInbox(data.inbox);
+            } catch (err) { console.error("Inbox fetch failed:", err.message); }
+          };
+
+          const handleFriendSearch = async (e) => {
+            e.preventDefault();
+            if (!friendSearchQuery.trim()) { setFriendSearchResults([]); return; }
+            try {
+              const res = await fetch('/api/users/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser.username, query: friendSearchQuery })
+              });
+              const data = await res.json();
+              if (data.success) setFriendSearchResults(data.users);
+            } catch (err) { console.error("Search failed:", err.message); }
+          };
+
+          const sendFriendRequest = async (toUsername) => {
+            try {
+              const res = await fetch('/api/friends/request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fromUsername: currentUser.username, toUsername })
+              });
+              const data = await res.json();
+              if (data.success) {
+                fetchFriendsData();
+                fetchBuddySuggestions();
+                handleFriendSearch({ preventDefault: () => {} });
+              }
+            } catch (err) { console.error("Request failed:", err.message); }
+          };
+
+          const respondFriendRequest = async (fromUsername, accept) => {
+            try {
+              const res = await fetch('/api/friends/respond', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: currentUser.username, fromUsername, accept })
+              });
+              const data = await res.json();
+              if (data.success) fetchFriendsData();
+            } catch (err) { console.error("Respond failed:", err.message); }
+          };
+
+          const shareReelWithFriend = async (toUsername) => {
+            setShareStatus(null);
+            try {
+              const res = await fetch('/api/reels/share', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ fromUsername: currentUser.username, toUsername, reel: activeReel })
+              });
+              const data = await res.json();
+              if (!res.ok || !data.success) throw new Error(data.error || "Send failed");
+              setShareStatus(`Sent to ${toUsername}!`);
+            } catch (err) {
+              setShareStatus(err.message);
+            }
+          };
+
+          const sendStudyBuddyMessage = async (e) => {
+            e.preventDefault();
+            const text = studyBuddyInput.trim();
+            if (!text) return;
+            const newHistory = [...studyBuddyMessages, { role: "user", content: text }];
+            setStudyBuddyMessages(newHistory);
+            setStudyBuddyInput("");
+            setStudyBuddyLoading(true);
+            try {
+              const res = await fetch('/api/ai/study-buddy-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ history: newHistory.map(m => ({ role: m.role, content: m.content })) })
+              });
+              const data = await res.json();
+              setStudyBuddyMessages([...newHistory, { role: "assistant", content: data.reply || "Sorry, I couldn't respond." }]);
+            } catch (err) {
+              setStudyBuddyMessages([...newHistory, { role: "assistant", content: "Couldn't reach the AI backend — is the server running?" }]);
+            } finally {
+              setStudyBuddyLoading(false);
+            }
+          };
+
+          useEffect(() => {
+            if (activeTab === "friends" && currentUser) {
+              fetchFriendsData();
+              fetchBuddySuggestions();
+              fetchSharedInbox();
+            }
+          }, [activeTab]);
+
+          const filteredReels = selectedTagFilter === "All" 
+            ? reelsPool 
+            : reelsPool.filter(r => r.semanticTags && r.semanticTags.includes(selectedTagFilter));
+
+          const activeReel = filteredReels[currentIndex] || filteredReels[0] || reelsPool[0];
+
+          // ── Activity logging + personalized ranking ──────────────────
+          const userRef = useRef(currentUser);
+          useEffect(() => { userRef.current = currentUser; }, [currentUser]);
+
+          const likedIdsRef = useRef([]);
+          useEffect(() => { likedIdsRef.current = likedReels.map(r => r.id); }, [likedReels]);
+
+          const lastQuizResultRef = useRef(null);
+          const viewStartRef = useRef(Date.now());
+          const [isPersonalized, setIsPersonalized] = useState(false);
+
+          const logActivity = (reel, watchSeconds) => {
+            const user = userRef.current;
+            if (!user || !reel) return;
+            const subject = (reel.semanticTags && reel.semanticTags[0]) || "STEM";
+            const quizResult = lastQuizResultRef.current;
+            const quizCorrect = quizResult && quizResult.reelId === reel.id ? quizResult.correct : false;
+            fetch('/api/activity/log', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                username: user.username,
+                reelId: reel.id,
+                subject,
+                type: reel.type,
+                watchSeconds,
+                liked: likedIdsRef.current.includes(reel.id),
+                quizCorrect
+              })
+            }).catch(err => console.error("Activity log failed:", err.message));
+          };
+
+          // Log watch time for a reel when the student scrolls away from it (or leaves the app)
+          useEffect(() => {
+            viewStartRef.current = Date.now();
+            const reelAtMount = activeReel;
+            return () => {
+              if (reelAtMount) {
+                const watched = (Date.now() - viewStartRef.current) / 1000;
+                logActivity(reelAtMount, watched);
+              }
+            };
+          }, [activeReel?.id]);
+
+          const fetchPersonalizedFeed = async () => {
+            const user = userRef.current;
+            if (!user || reelsPool.length === 0) return;
+            try {
+              const res = await fetch('/api/ai/recommend-feed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username: user.username, reels: reelsPool })
+              });
+              const data = await res.json();
+              if (res.ok && data.success) {
+                let ranked = data.reels;
+                const pinnedId = justGeneratedIdRef.current;
+                if (pinnedId !== null) {
+                  const pinnedIdx = ranked.findIndex(r => r.id === pinnedId);
+                  if (pinnedIdx > 0) {
+                    const [pinned] = ranked.splice(pinnedIdx, 1);
+                    ranked = [pinned, ...ranked];
+                  }
+                  justGeneratedIdRef.current = null;
+                }
+                setReelsPool(ranked);
+                setIsPersonalized(data.personalized);
+                setCurrentIndex(0);
+              }
+            } catch (err) {
+              console.error("Personalized feed fetch failed:", err.message);
+            }
+          };
+
+          useEffect(() => {
+            if (activeTab === "reels") fetchPersonalizedFeed();
+          }, [activeTab]);
+
+          const prevReelRef = useRef(null);
+          useEffect(() => {
+            const leftReel = prevReelRef.current;
+            // Same cadence as before (every 2 reels), but the quiz now tests the reel the student
+            // just scrolled AWAY from — which they've actually seen — not the one they just arrived at.
+            if (currentIndex > 0 && currentIndex % 2 === 0 && leftReel && leftReel.quiz) {
+              setQuizReel(leftReel);
+              setShowQuiz(true);
+            }
+            prevReelRef.current = activeReel;
+          }, [currentIndex]);
+
+          const handleQuizAnswer = (idx) => {
+            setQuizSelected(idx);
+            setQuizSubmitted(true);
+            lastQuizResultRef.current = { reelId: quizReel.id, correct: idx === quizReel.quiz.correctIndex };
+            setTimeout(() => {
+              setShowQuiz(false);
+              setQuizReel(null);
+              setQuizSelected(null);
+              setQuizSubmitted(false);
+            }, 1300);
+          };
+
+          if (authView === "welcome") {
+            return (
+              <div className="flex flex-col items-center justify-center h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-6 font-sans transition-colors">
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="fixed top-3 right-3 z-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-full w-9 h-9 flex items-center justify-center text-sm shadow-sm"
+                >
+                  {darkMode ? "☀️" : "🌙"}
+                </button>
+                <div className="max-w-md w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-8 rounded-3xl shadow-sm text-center space-y-6">
+                  <div className="w-12 h-12 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 rounded-2xl flex items-center justify-center mx-auto text-xl font-bold">🎓</div>
+                  <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">StudyReels AI Pro</h1>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Immersive study reels, an AI study buddy, and study partners to keep you on track.</p>
+                  </div>
+                  <div className="flex flex-col gap-3 pt-2">
+                    <button onClick={() => setAuthView("signin")} className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl text-xs font-bold text-white transition-all shadow-sm">Sign In</button>
+                    <button onClick={() => setAuthView("signup")} className="w-full bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 py-3 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 transition-all">Create Account</button>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          if (authView === "signin" || authView === "signup") {
+            const isUp = authView === "signup";
+            const step2Ready = nameInput.trim() && usernameInput.trim() && passwordInput.trim();
+
+            return (
+              <div className="flex items-center justify-center h-screen bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 p-4 font-sans transition-colors">
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="fixed top-3 right-3 z-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-full w-9 h-9 flex items-center justify-center text-sm shadow-sm"
+                >
+                  {darkMode ? "☀️" : "🌙"}
+                </button>
+                <div className="w-full max-w-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-8 rounded-3xl shadow-sm">
+                  {isUp ? (
+                    <>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100">Create Account</h1>
+                        <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950 px-2 py-0.5 rounded-full">Step {signupStep} of 2</span>
+                      </div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">{signupStep === 1 ? "Let's start with the basics" : "Now tell us about your classes"}</p>
+
+                      {signupStep === 1 && (
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Full Name:</label>
+                            <input type="text" required placeholder="Alex Smith" value={nameInput} onChange={e => setNameInput(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Username:</label>
+                            <input type="text" required placeholder="student" value={usernameInput} onChange={e => setUsername(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Password:</label>
+                            <input type="password" required placeholder="••••••••" value={passwordInput} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500" />
+                          </div>
+                          {authError && <p className="text-[11px] text-rose-600 font-medium">{authError}</p>}
+                          <button type="button" disabled={!step2Ready} onClick={() => setSignupStep(2)} className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed py-3 rounded-xl text-xs font-bold text-white transition-all shadow-sm">Next →</button>
+                          <button type="button" onClick={() => { setAuthError(null); setAuthView("welcome"); }} className="w-full text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 underline mt-2">← Back</button>
+                        </div>
+                      )}
+
+                      {signupStep === 2 && (
+                        <form onSubmit={(e) => handleAuthSubmit(e, true)} className="space-y-4">
+                          <div>
+                            <div className="flex items-center gap-3 mb-2">
+                              <Avatar pic={signupPic} size="w-14 h-14" />
+                              <div>
+                                <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Profile Picture (optional):</label>
+                                <input type="file" accept="image/*" onChange={e => handlePicSelect(e, setSignupPic)} className="text-[10px] text-slate-500 dark:text-slate-400" />
+                              </div>
+                            </div>
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-1">...or just pick an emoji:</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {EMOJI_AVATARS.map(em => (
+                                <button type="button" key={em} onClick={() => setSignupPic(em)} className={`w-8 h-8 rounded-full flex items-center justify-center text-base border transition-all ${signupPic === em ? "border-blue-600 bg-blue-50 dark:bg-blue-950" : "border-slate-200 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700"}`}>{em}</button>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Grade Level:</label>
+                            <input type="text" placeholder="Grade 11" value={gradeInput} onChange={e => setGradeInput(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Curriculum Board:</label>
+                            <input type="text" placeholder="AP STEM" value={currInput} onChange={e => setCurrInput(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Class List:</label>
+                            <input type="text" placeholder="Calculus, AP Biology, World History" value={signupClassList} onChange={e => setSignupClassList(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500" />
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Or pick default classes to preload demo reels:</label>
+                            <div className="flex flex-wrap gap-2">
+                              {COMMON_CLASSES.map(c => (
+                                <button type="button" key={c.key} onClick={() => toggleClassPick(c.key, signupCommonClasses, setSignupCommonClasses)}
+                                  className={`px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all ${signupCommonClasses.includes(c.key) ? "bg-blue-600 border-blue-600 text-white" : "bg-slate-50 dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300"}`}>
+                                  {c.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Bio (optional):</label>
+                            <textarea rows="2" placeholder="What are you studying for?" value={signupBio} onChange={e => setSignupBio(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 resize-none" />
+                          </div>
+                          {authError && <p className="text-[11px] text-rose-600 font-medium">{authError}</p>}
+                          <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl text-xs font-bold text-white transition-all shadow-sm">Create Account</button>
+                          <button type="button" onClick={() => setSignupStep(1)} className="w-full text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 underline mt-2">← Back</button>
+                        </form>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <h1 className="text-lg font-bold text-slate-900 dark:text-slate-100 mb-1">Welcome Back</h1>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">Enter your student credentials</p>
+                      <form onSubmit={(e) => handleAuthSubmit(e, false)} className="space-y-4">
+                        <div>
+                          <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Username:</label>
+                          <input type="text" required placeholder="student" value={usernameInput} onChange={e => setUsername(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500" />
+                        </div>
+                        <div>
+                          <label className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 block mb-1">Password:</label>
+                          <input type="password" required placeholder="••••••••" value={passwordInput} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-3 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500" />
+                        </div>
+                        {authError && <p className="text-[11px] text-rose-600 font-medium">{authError}</p>}
+                        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-xl text-xs font-bold text-white transition-all shadow-sm">Sign In</button>
+                        <button type="button" onClick={() => { setAuthError(null); setAuthView("welcome"); }} className="w-full text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 underline mt-2">← Back</button>
+                      </form>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          }
+
+          const NAV_ITEMS = [
+            { key: "workspace", icon: "📁", label: "Hub" },
+            { key: "reels", icon: "⚡", label: "Reels" },
+            { key: "friends", icon: "👥", label: "Partners" },
+            { key: "buddy", icon: "🤖", label: "Buddy" },
+            { key: "likes", icon: "❤️", label: "Saved" },
+            { key: "profile", icon: "👤", label: "Profile" }
+          ];
+
+          const BottomNav = () => (
+            <div className={`grid grid-cols-6 border-t z-30 ${activeTab === "reels" ? "bg-slate-950/80 backdrop-blur-md border-white/10" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"}`}>
+              {NAV_ITEMS.map(item => {
+                const isActive = activeTab === item.key;
+                const badge = item.key === "likes" ? likedReels.length
+                  : item.key === "friends" ? incomingRequests.length
+                  : 0;
+                return (
+                  <button
+                    key={item.key}
+                    onClick={() => setActiveTab(item.key)}
+                    className={`relative flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-semibold transition-all ${
+                      isActive
+                        ? (activeTab === "reels" ? "text-white" : "text-blue-600 dark:text-blue-400")
+                        : (activeTab === "reels" ? "text-white/50 hover:text-white/80" : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300")
+                    }`}
+                  >
+                    <span className="text-base leading-none">{item.icon}</span>
+                    <span>{item.label}</span>
+                    {badge > 0 && (
+                      <span className="absolute top-1 right-[22%] bg-rose-500 text-white text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">{badge}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          );
+
+          return (
+            <div className="flex flex-col h-screen font-sans overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors">
+
+              {/* Dark mode toggle — always available */}
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="fixed top-3 right-3 z-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-full w-9 h-9 flex items-center justify-center text-sm shadow-sm"
+              >
+                {darkMode ? "☀️" : "🌙"}
+              </button>
+
+              {/* MAIN CONTENT AREA */}
+              <div className="flex-1 overflow-hidden relative">
+
+              {activeTab === "reels" ? (
+                /* ── FULLSCREEN REELS: just the feed + bottom nav, nothing else ── */
+                <div className="h-full flex flex-col items-center justify-center relative bg-slate-100 dark:bg-slate-800 p-3">
+
+                  {reelsPool.length === 0 ? (
+                    <div className="w-full max-w-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl p-6 text-center space-y-3">
+                      <div className="text-3xl">📭</div>
+                      <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">No reels in your feed yet</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Pick some default classes in your Profile, or add your own notes in Hub to compile a reel.</p>
+                      <div className="flex gap-2 pt-1">
+                        <button onClick={() => setActiveTab("profile")} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-2 rounded-xl transition-all">Pick Classes</button>
+                        <button onClick={() => setActiveTab("workspace")} className="flex-1 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2 rounded-xl transition-all">Add Notes</button>
+                      </div>
+                    </div>
+                  ) : (
+                  <>
+                  <div className="flex items-center justify-between w-full max-w-sm mb-3 z-20 relative">
+                    <button
+                      onClick={() => setShowTagFilterMenu(!showTagFilterMenu)}
+                      className="px-3 py-1.5 rounded-full text-[11px] font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm flex items-center gap-1"
+                    >
+                      🎯 {selectedTagFilter} ▾
+                    </button>
+
+                    {showTagFilterMenu && (
+                      <div className="absolute top-9 left-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-lg p-2 z-30 w-40">
+                        {["All", "Math", "Biology", "Humanities", "STEM"].map(tag => (
+                          <button
+                            key={tag}
+                            onClick={() => { setSelectedTagFilter(tag); setCurrentIndex(0); setShowTagFilterMenu(false); }}
+                            className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${selectedTagFilter === tag ? "bg-slate-900 dark:bg-blue-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+                          >
+                            {tag}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {isPersonalized && (
+                    <div className="w-full max-w-sm mb-2 flex items-center gap-1.5 z-20">
+                      <span className="text-[10px] font-bold bg-violet-600 text-white px-2.5 py-1 rounded-full shadow-sm">🎯 Feed personalized by your activity</span>
+                    </div>
+                  )}
+
+                  <div className={`relative w-full max-w-sm flex-1 md:h-[72vh] md:flex-none md:rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between ${activeReel.bgGradient} p-6 transition-all duration-700`}>
+
+                    {activeReel.videoUrl && (
+                      <React.Fragment>
+                        <video
+                          key={activeReel.id}
+                          src={activeReel.videoUrl}
+                          controls
+                          playsInline
+                          loop
+                          className="absolute inset-0 w-full h-full object-cover z-0 bg-black"
+                        />
+                        <div className="absolute inset-0 z-0 bg-gradient-to-t from-black/70 via-transparent to-black/40 pointer-events-none" />
+                      </React.Fragment>
+                    )}
+
+                    <div className="flex justify-between items-center z-10">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-extrabold uppercase bg-black/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 text-white tracking-widest">
+                          {activeReel.type === 'pov' ? '🔥 POV Mode' : activeReel.type === 'ai_footage' ? '🌌 AI Footage' : '🤖 Avatar Led'}
+                        </span>
+                        {activeReel.aiGenerated && (
+                          <span className="text-[9px] font-bold uppercase bg-emerald-500/90 backdrop-blur-md px-2 py-1 rounded-full text-white tracking-wide">✨ Live AI</span>
+                        )}
+                        {activeReel.trust && (
+                          <button
+                            onClick={() => setShowTrust(true)}
+                            className={`text-[9px] font-bold uppercase backdrop-blur-md px-2 py-1 rounded-full text-white tracking-wide border ${activeReel.trust.score >= 80 ? "bg-emerald-600/90 border-emerald-400/40" : activeReel.trust.score >= 50 ? "bg-amber-500/90 border-amber-300/40" : "bg-rose-600/90 border-rose-400/40"}`}
+                          >
+                            🛡️ Trust {activeReel.trust.score}
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => { setShareStatus(null); setShowShareModal(true); }}
+                          className="p-2 rounded-full border text-xs backdrop-blur-md bg-black/30 border-white/20 text-white hover:bg-black/50 transition-all"
+                        >
+                          📤
+                        </button>
+                        <button
+                          onClick={() => handleLikeReel(activeReel)}
+                          className={`p-2 rounded-full border text-xs backdrop-blur-md transition-all ${likedReels.some(r => r.id === activeReel.id) ? "bg-rose-500 border-rose-400 text-white" : "bg-black/30 border-white/20 text-white hover:bg-black/50"}`}
+                        >
+                          ❤️
+                        </button>
+                      </div>
+                    </div>
+
+                    {!activeReel.videoUrl && (
+                      <div className="flex flex-col items-center justify-center text-center my-auto px-4 z-10 space-y-4">
+                        {activeReel.type === 'avatar' && (
+                          <div className="w-16 h-16 bg-white/20 border-2 border-white/40 rounded-full flex items-center justify-center text-2xl shadow-lg mb-2">
+                            👩‍🏫
+                          </div>
+                        )}
+                        <p className="text-base md:text-lg font-bold leading-relaxed drop-shadow-md">
+                          "{activeReel.script}"
+                        </p>
+                      </div>
+                    )}
+                    {activeReel.videoUrl && (
+                      <div className="my-auto z-10 px-2">
+                        <p className="text-xs font-bold text-white/90 drop-shadow-md text-center">{activeReel.topic}</p>
+                      </div>
+                    )}
+
+                    <div className="flex items-end justify-between z-10 pb-2">
+                      <div className="flex gap-2">
+                        <button onClick={() => setShowSource(true)} className="bg-black/30 hover:bg-black/50 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all">📄 Source</button>
+                        {activeReel.description && (
+                          <button onClick={() => setShowExplain(true)} className="bg-black/30 hover:bg-black/50 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all">📖 Explain</button>
+                        )}
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <button onClick={() => { if (currentIndex > 0) setCurrentIndex(currentIndex - 1); }} disabled={currentIndex === 0} className="bg-black/40 hover:bg-black/60 p-3 rounded-full border border-white/20 disabled:opacity-30 text-white shadow-sm">⬆️</button>
+                        <button onClick={() => { if (currentIndex < filteredReels.length - 1) setCurrentIndex(currentIndex + 1); }} disabled={currentIndex >= filteredReels.length - 1} className="bg-black/40 hover:bg-black/60 p-3 rounded-full border border-white/20 disabled:opacity-30 text-white shadow-sm">⬇️</button>
+                      </div>
+                    </div>
+
+                    {/* Pop Quiz Checkpoint — tests the reel just watched, not the one on screen now */}
+                    {showQuiz && quizReel && (
+                      <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-xl z-50 flex flex-col justify-center p-6 text-white animate-fadeIn">
+                        <span className="text-xs font-bold text-amber-400 uppercase tracking-widest mb-1">Pop Quiz Checkpoint ⚡</span>
+                        <p className="text-xs text-slate-400 mb-4">Quick recall check on "{quizReel.topic}" — the reel you just watched.</p>
+                        <h2 className="text-sm font-bold mb-4 text-slate-100">{quizReel.quiz.question}</h2>
+                        <div className="space-y-2.5">
+                          {quizReel.quiz.options.map((opt, idx) => {
+                            let btnStyle = "bg-slate-900 border-slate-800 text-slate-200 hover:border-blue-500";
+                            if (quizSubmitted) {
+                              if (idx === quizReel.quiz.correctIndex) btnStyle = "bg-emerald-600 border-emerald-500 text-white";
+                              else if (idx === quizSelected) btnStyle = "bg-rose-600 border-rose-500 text-white";
+                            }
+                            return (
+                              <button key={idx} disabled={quizSubmitted} onClick={() => handleQuizAnswer(idx)} className={`w-full text-left p-3 rounded-xl border text-xs font-medium transition-all ${btnStyle}`}>{opt}</button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Source Modal */}
+                    {showSource && (
+                      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full text-left shadow-lg text-slate-900 dark:text-slate-100">
+                          <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider block mb-1">Source Grounding Proof</span>
+                          <h3 className="text-sm font-bold mb-3">{activeReel.topic}</h3>
+                          <p className="text-xs italic text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-700 p-3 rounded-lg border-l-2 border-blue-600 mb-5">"{activeReel.sourceQuote}"</p>
+                          <button onClick={() => setShowSource(false)} className="w-full bg-slate-900 hover:bg-slate-800 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm">Close</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Explain Modal */}
+                    {showExplain && (
+                      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full text-left shadow-lg text-slate-900 dark:text-slate-100">
+                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block mb-1">📖 Concept Explained</span>
+                          <h3 className="text-sm font-bold mb-3">{activeReel.topic}</h3>
+                          <p className="text-xs text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-700 p-3 rounded-lg border-l-2 border-emerald-600 mb-5 leading-relaxed">{activeReel.description}</p>
+                          <button onClick={() => setShowExplain(false)} className="w-full bg-slate-900 hover:bg-slate-800 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm">Close</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Trust Score Modal — deterministic, rule-based grounding check, not another AI grading this one */}
+                    {showTrust && activeReel.trust && (
+                      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-6 overflow-y-auto">
+                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full text-left shadow-lg text-slate-900 dark:text-slate-100 max-h-[90%] overflow-y-auto">
+                          <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block mb-1">🛡️ Trust Score — Deterministic Check</span>
+                          <div className="flex items-end gap-2 mb-3">
+                            <span className={`text-3xl font-extrabold ${activeReel.trust.score >= 80 ? "text-emerald-600" : activeReel.trust.score >= 50 ? "text-amber-500" : "text-rose-600"}`}>{activeReel.trust.score}</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 mb-1">/ 100 — no AI grading here, just rules run against your notes</span>
+                          </div>
+
+                          <p className="text-[11px] text-slate-600 dark:text-slate-300 mb-3">{activeReel.trust.termOverlapPct}% of this reel's key terms were found directly in your uploaded notes. Quiz answer traceable to your notes: <span className={activeReel.trust.quizAnswerVerified ? "text-emerald-600 font-bold" : "text-rose-600 font-bold"}>{activeReel.trust.quizAnswerVerified ? "Yes" : "No"}</span>.</p>
+
+                          {activeReel.trust.flags.length > 0 && (
+                            <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 rounded-lg p-3 mb-3">
+                              <span className="text-[10px] font-bold text-rose-700 dark:text-rose-400 uppercase block mb-1">⚠️ Flags</span>
+                              <ul className="text-[11px] text-rose-700 dark:text-rose-300 list-disc list-inside space-y-0.5">
+                                {activeReel.trust.flags.map((f, i) => <li key={i}>{f}</li>)}
+                              </ul>
+                            </div>
+                          )}
+
+                          {activeReel.trust.matchedTerms.length > 0 && (
+                            <div className="mb-3">
+                              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase block mb-1.5">✓ Verified terms</span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {activeReel.trust.matchedTerms.map((t, i) => <span key={i} className="text-[10px] bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded-full">{t}</span>)}
+                              </div>
+                            </div>
+                          )}
+
+                          {activeReel.trust.unmatchedTerms.length > 0 && (
+                            <div className="mb-4">
+                              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block mb-1.5">Not found in your notes</span>
+                              <div className="flex flex-wrap gap-1.5">
+                                {activeReel.trust.unmatchedTerms.map((t, i) => <span key={i} className="text-[10px] bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-600 px-2 py-0.5 rounded-full">{t}</span>)}
+                              </div>
+                            </div>
+                          )}
+
+                          <button onClick={() => setShowTrust(false)} className="w-full bg-slate-900 hover:bg-slate-800 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm">Close</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Share to Friend Modal */}
+                    {showShareModal && (
+                      <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+                        <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 w-full text-left shadow-lg text-slate-900 dark:text-slate-100 max-h-[80%] flex flex-col">
+                          <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider block mb-1">📤 Send to a Friend</span>
+                          <h3 className="text-sm font-bold mb-3">{activeReel.topic}</h3>
+                          {friends.length === 0 ? (
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">No study buddies yet — add friends from the Friends tab first.</p>
+                          ) : (
+                            <div className="space-y-2 overflow-y-auto mb-4 pr-1">
+                              {friends.map(f => (
+                                <button key={f.username} onClick={() => shareReelWithFriend(f.username)} className="w-full flex items-center justify-between bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 p-2.5 rounded-xl text-xs font-semibold text-slate-800 dark:text-slate-100 transition-all">
+                                  <span>{f.name || f.username}</span>
+                                  <span className="text-blue-600 dark:text-blue-400">Send →</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                          {shareStatus && <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mb-3">{shareStatus}</p>}
+                          <button onClick={() => setShowShareModal(false)} className="w-full bg-slate-900 hover:bg-slate-800 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm">Close</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  </>
+                  )}
+                </div>
+              ) : (
+                /* ── ALL OTHER TABS: Hub / Friends / Saved / Profile ── */
+                <div className="h-full p-6 bg-white dark:bg-slate-900 overflow-y-auto">
+                  <div className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl mb-6 max-w-lg mx-auto">
+                    <div className="flex items-center gap-3">
+                      <Avatar pic={currentUser?.profilePic} size="w-10 h-10" />
+                      <div>
+                        <h2 className="font-bold text-sm text-slate-900 dark:text-slate-100">{currentUser?.name || "Student"}</h2>
+                        <p className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">{currentUser?.grade} • {currentUser?.curriculum}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => { setUser(null); setAuthView("welcome"); }} className="text-[10px] bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-slate-200 font-medium transition-all">Sign Out</button>
+                  </div>
+
+                  <div className="max-w-lg mx-auto">
+
+                  {activeTab === "workspace" && (
+                    <div className="space-y-4">
+                      <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+                        <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider mb-3">Upload Class Notes & Slides</h3>
+                        <form onSubmit={handleUploadNotes} className="space-y-3">
+                          <input type="text" required placeholder="Topic Title" value={noteTitle} onChange={e => setNoteTitle(e.target.value)} className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500" />
+                          <textarea required rows="3" placeholder="Paste notes..." value={noteContent} onChange={e => setNoteContent(e.target.value)} className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500 resize-none" />
+                          <button type="submit" disabled={isGenerating} className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed py-2.5 rounded-xl text-xs font-bold text-white transition-all shadow-sm">
+                            {isGenerating ? "🤖 Claude is compiling your reel..." : "+ Compile Study Reel 🚀"}
+                          </button>
+                          {generateError && <p className="text-[10px] text-rose-600 font-medium">{generateError}</p>}
+                        </form>
+                      </div>
+
+                      <div>
+                        <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Indexed Materials ({notes.length}):</h4>
+                        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                          {notes.map(n => (
+                            <div key={n.id} className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-xl flex justify-between items-center">
+                              <div>
+                                <h5 className="text-xs font-bold text-slate-900 dark:text-slate-100">{n.title}</h5>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{n.content}</p>
+                              </div>
+                              <span className="text-[10px] bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded font-medium">Synced</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === "friends" && (
+                    <div className="space-y-5">
+                      <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-4 text-white shadow-sm">
+                        <h3 className="text-xs font-bold uppercase tracking-wider mb-1">⚡ Quick Match</h3>
+                        {buddySuggestions.length > 0 ? (
+                          <div className="flex items-center justify-between mt-2">
+                            <div>
+                              <p className="text-sm font-bold">{buddySuggestions[0].name}</p>
+                              <p className="text-[11px] text-white/80">{buddySuggestions[0].classList || "New to the app"}</p>
+                            </div>
+                            <button onClick={() => sendFriendRequest(buddySuggestions[0].username)} className="bg-white text-orange-600 text-[11px] font-bold px-3 py-1.5 rounded-lg hover:bg-white/90 transition-all whitespace-nowrap">Request →</button>
+                          </div>
+                        ) : (
+                          <p className="text-[11px] text-white/80 mt-1">No matches yet — add classes in your Profile to get instantly matched with a study partner.</p>
+                        )}
+                      </div>
+
+                      <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+                        <h3 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-2">Find a Study Buddy</h3>
+                        <form onSubmit={handleFriendSearch} className="flex gap-2">
+                          <input type="text" placeholder="Search by name or username..." value={friendSearchQuery} onChange={e => setFriendSearchQuery(e.target.value)} className="flex-1 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl p-2.5 text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:border-blue-500" />
+                          <button type="submit" className="bg-blue-600 hover:bg-blue-700 px-4 rounded-xl text-xs font-bold text-white transition-all shadow-sm">Search</button>
+                        </form>
+                        {friendSearchResults.length > 0 && (
+                          <div className="space-y-2 mt-3 max-h-48 overflow-y-auto pr-1">
+                            {friendSearchResults.map(u => (
+                              <div key={u.username} className="flex items-center justify-between bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 p-2.5 rounded-xl">
+                                <div className="flex items-center gap-2.5">
+                                  <Avatar pic={u.profilePic} />
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-900 dark:text-slate-100">{u.name}</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">{u.grade} • {u.curriculum}</p>
+                                  </div>
+                                </div>
+                                {u.isFriend ? (
+                                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">✓ Friends</span>
+                                ) : u.requestSent ? (
+                                  <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">Pending...</span>
+                                ) : u.requestReceived ? (
+                                  <button onClick={() => respondFriendRequest(u.username, true)} className="text-[10px] font-bold bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg transition-all">Accept</button>
+                                ) : (
+                                  <button onClick={() => sendFriendRequest(u.username)} className="text-[10px] font-bold bg-slate-900 hover:bg-slate-800 text-white px-2.5 py-1 rounded-lg transition-all">+ Add</button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {incomingRequests.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Friend Requests ({incomingRequests.length}):</h4>
+                          <div className="space-y-2">
+                            {incomingRequests.map(u => (
+                              <div key={u.username} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl">
+                                <p className="text-xs font-bold text-slate-900 dark:text-slate-100">{u.name}</p>
+                                <div className="flex gap-1.5">
+                                  <button onClick={() => respondFriendRequest(u.username, true)} className="text-[10px] font-bold bg-blue-600 hover:bg-blue-700 text-white px-2.5 py-1 rounded-lg transition-all">Accept</button>
+                                  <button onClick={() => respondFriendRequest(u.username, false)} className="text-[10px] font-bold bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 px-2.5 py-1 rounded-lg transition-all">Decline</button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Suggested Study Buddies:</h4>
+                        {buddySuggestions.length === 0 ? (
+                          <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-center text-xs text-slate-400 dark:text-slate-500">No suggestions yet — add classes to your profile to get matched.</div>
+                        ) : (
+                          <div className="space-y-2">
+                            {buddySuggestions.map(u => (
+                              <div key={u.username} className="flex items-center justify-between bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl">
+                                <div className="flex items-center gap-2.5">
+                                  <Avatar pic={u.profilePic} />
+                                  <div>
+                                    <p className="text-xs font-bold text-slate-900 dark:text-slate-100">{u.name}</p>
+                                    <p className="text-[10px] text-slate-500 dark:text-slate-400">{u.classList}</p>
+                                  </div>
+                                </div>
+                                <button onClick={() => sendFriendRequest(u.username)} className="text-[10px] font-bold bg-slate-900 hover:bg-slate-800 text-white px-2.5 py-1 rounded-lg transition-all">+ Add</button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div>
+                        <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Your Study Buddies ({friends.length}):</h4>
+                        {friends.length === 0 ? (
+                          <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-4 text-center text-xs text-slate-400 dark:text-slate-500">No study buddies yet — search above or accept a suggestion.</div>
+                        ) : (
+                          <div className="space-y-2">
+                            {friends.map(u => (
+                              <button key={u.username} onClick={() => setViewingFriend(u)} className="w-full flex items-center gap-2.5 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl text-left transition-all">
+                                <Avatar pic={u.profilePic} />
+                                <div>
+                                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100">{u.name}</p>
+                                  <p className="text-[10px] text-slate-500 dark:text-slate-400">{u.grade} • {u.curriculum}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {sharedInbox.length > 0 && (
+                        <div>
+                          <h4 className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">Reels Sent To You ({sharedInbox.length}):</h4>
+                          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                            {sharedInbox.map((item, i) => (
+                              <button
+                                key={i}
+                                onClick={() => { setReelsPool([item.reel, ...reelsPool]); setActiveTab("reels"); }}
+                                className="w-full text-left bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 p-2.5 rounded-xl transition-all"
+                              >
+                                <span className="text-[9px] text-blue-600 dark:text-blue-400 uppercase font-bold block">From {item.fromName || item.fromUsername}</span>
+                                <p className="text-xs text-slate-800 dark:text-slate-200 truncate">{item.reel.topic}</p>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === "buddy" && (
+                    <div className="flex flex-col h-[65vh] bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
+                      <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">🤖 Study Buddy AI</h3>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400">Always online — no request needed. Ask about a topic, get quizzed, or talk through your notes.</p>
+                      </div>
+                      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                        {studyBuddyMessages.length === 0 && (
+                          <p className="text-xs text-slate-400 dark:text-slate-500 text-center mt-6">Ask me to explain a concept, quiz you, or help with your notes!</p>
+                        )}
+                        {studyBuddyMessages.map((m, i) => (
+                          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs whitespace-pre-wrap ${m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-100'}`}>
+                              {m.content}
+                            </div>
+                          </div>
+                        ))}
+                        {studyBuddyLoading && (
+                          <div className="flex justify-start">
+                            <div className="bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 rounded-2xl px-3 py-2 text-xs">Thinking...</div>
+                          </div>
+                        )}
+                      </div>
+                      <form onSubmit={sendStudyBuddyMessage} className="p-3 border-t border-slate-200 dark:border-slate-700 flex gap-2 bg-white dark:bg-slate-900">
+                        <input type="text" value={studyBuddyInput} onChange={e => setStudyBuddyInput(e.target.value)} placeholder="Ask about a topic..." className="flex-1 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-900 dark:text-slate-100 rounded-xl p-2.5 text-xs focus:outline-none focus:border-blue-500" />
+                        <button type="submit" disabled={studyBuddyLoading || !studyBuddyInput.trim()} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-4 rounded-xl text-xs font-bold text-white transition-all">Send</button>
+                      </form>
+                    </div>
+                  )}
+
+                  {activeTab === "likes" && (
+                    <div className="space-y-3">
+                      <h3 className="text-xs font-bold text-rose-600 dark:text-rose-400 uppercase tracking-wider">Saved Study Reels</h3>
+                      {likedReels.length === 0 ? (
+                        <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-6 text-center text-xs text-slate-400 dark:text-slate-500">
+                          No saved reels yet. Click the heart icon on any reel to save it here!
+                        </div>
+                      ) : (
+                        <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                          {likedReels.map(r => (
+                            <div key={r.id} className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-xl">
+                              <span className="text-[9px] text-blue-600 dark:text-blue-400 uppercase font-bold block">{r.topic}</span>
+                              <p className="text-xs text-slate-800 dark:text-slate-200 truncate">{r.script}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {activeTab === "profile" && (
+                    <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 space-y-3">
+                      <h3 className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">Student Profile & Class List</h3>
+                      <form onSubmit={handleUpdateProfile} className="space-y-2.5 text-xs">
+                        <div>
+                          <div className="flex items-center gap-3 mb-2">
+                            <Avatar pic={editPic} size="w-14 h-14" />
+                            <div>
+                              <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">Profile Picture:</label>
+                              <input type="file" accept="image/*" onChange={e => handlePicSelect(e, setEditPic)} className="text-[10px] text-slate-500 dark:text-slate-400" />
+                            </div>
+                          </div>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500 mb-1">...or just pick an emoji:</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {EMOJI_AVATARS.map(em => (
+                              <button type="button" key={em} onClick={() => setEditPic(em)} className={`w-8 h-8 rounded-full flex items-center justify-center text-base border transition-all ${editPic === em ? "border-blue-600 bg-blue-50 dark:bg-blue-950" : "border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600"}`}>{em}</button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">Full Name:</label>
+                          <input type="text" value={editName} onChange={e => setEditName(e.target.value)} className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-2 text-slate-900 dark:text-slate-100" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">Grade Level:</label>
+                          <input type="text" value={editGrade} onChange={e => setEditGrade(e.target.value)} className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-2 text-slate-900 dark:text-slate-100" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">Curriculum Board:</label>
+                          <input type="text" value={editCurr} onChange={e => setEditCurr(e.target.value)} className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-2 text-slate-900 dark:text-slate-100" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">Class List:</label>
+                          <input type="text" value={editClassList} onChange={e => setEditClassList(e.target.value)} className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-2 text-slate-900 dark:text-slate-100" />
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">Default Classes (preloads demo reels in your feed):</label>
+                          <div className="flex flex-wrap gap-2">
+                            {COMMON_CLASSES.map(c => (
+                              <button type="button" key={c.key} onClick={() => toggleClassPick(c.key, editCommonClasses, setEditCommonClasses)}
+                                className={`px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all ${editCommonClasses.includes(c.key) ? "bg-blue-600 border-blue-600 text-white" : "bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300"}`}>
+                                {c.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-[10px] text-slate-500 dark:text-slate-400 block mb-1">Bio:</label>
+                          <textarea rows="2" value={editBio} onChange={e => setEditBio(e.target.value)} className="w-full bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg p-2 text-slate-900 dark:text-slate-100 resize-none" />
+                        </div>
+                        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 py-2 rounded-lg font-bold text-white transition-all shadow-sm mt-1">Save Changes</button>
+                      </form>
+                    </div>
+                  )}
+                  </div>
+                  <div className="text-[10px] text-slate-400 dark:text-slate-500 text-center pt-6">StudyReels</div>
+                </div>
+              )}
+              </div>
+
+              {/* Friend Profile Viewer */}
+              {viewingFriend && (
+                <div className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 flex items-center justify-center p-6" onClick={() => setViewingFriend(null)}>
+                  <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 w-full max-w-sm text-left shadow-lg text-slate-900 dark:text-slate-100" onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <Avatar pic={viewingFriend.profilePic} size="w-14 h-14" />
+                      <div>
+                        <h3 className="text-sm font-bold">{viewingFriend.name}</h3>
+                        <p className="text-[11px] text-blue-600 dark:text-blue-400">{viewingFriend.grade} • {viewingFriend.curriculum}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Classes</span>
+                        <p className="text-xs text-slate-700 dark:text-slate-300">{viewingFriend.classList || "Not listed yet"}</p>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider block mb-1">Bio</span>
+                        <p className="text-xs text-slate-700 dark:text-slate-300">{viewingFriend.bio || "No bio yet"}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setViewingFriend(null)} className="w-full bg-slate-900 hover:bg-slate-800 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm mt-5">Close</button>
+                  </div>
+                </div>
+              )}
+
+              <BottomNav />
+            </div>
+          );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<StudyReelsApp />);
+    </script>
+</body>
+</html>
