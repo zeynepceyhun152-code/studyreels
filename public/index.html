@@ -18,6 +18,35 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
+        // Minimal line-icon set (stroke-based, IG-style visual language) — original paths, no copied assets.
+        const ICON_PATHS = {
+          heart: ["M12 21s-8.2-4.9-11-9.7C-.6 7.6 1.6 3.5 5.4 3c2.3-.3 4.4.9 5.6 2.8C12.2 3.9 14.3 2.7 16.6 3c3.8.5 6 4.6 4.4 8.3C18.2 16.1 12 21 12 21z"],
+          bookmark: ["M6 3h12v18l-6-4.2L6 21V3z"],
+          document: ["M6 2h8l5 5v15H6V2z", "M14 2v5h5"],
+          send: ["M2 11l19-9-6 19-4-7-7-3z", "M15 3L8 13"],
+          shield: ["M12 2l8 3v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5l8-3z"],
+          chevronUp: ["M6 15l6-6 6 6"],
+          chevronDown: ["M6 9l6 6 6-6"],
+          house: ["M3 11l9-8 9 8", "M5 10v10h5v-6h4v6h5V10"],
+          film: ["M3 5h18v14H3z", "M3 9h18", "M3 15h18", "M8 5v4", "M8 15v4", "M16 5v4", "M16 15v4"],
+          users: ["M8 11a3 3 0 100-6 3 3 0 000 6z", "M16 11a3 3 0 100-6 3 3 0 000 6z", "M2 20c0-3.3 3-5.5 6-5.5s6 2.2 6 5.5", "M13 14.8c2.6.3 5 2.4 5 5.2"],
+          chat: ["M21 11.5a8.4 8.4 0 01-8.9 8.4 8.9 8.9 0 01-3.4-.7L3 21l1.8-5.5A8.4 8.4 0 1121 11.5z"],
+          userCircle: ["M12 12a4 4 0 100-8 4 4 0 000 8z", "M4 20c0-4 4-6 8-6s8 2 8 6"],
+          x: ["M6 6l12 12", "M18 6L6 18"]
+        };
+
+        const Icon = ({ name, filled = false, size = 22, className = "" }) => (
+          <svg
+            width={size} height={size} viewBox="0 0 24 24"
+            fill={filled ? "currentColor" : "none"}
+            stroke="currentColor" strokeWidth={filled ? "0" : "1.8"}
+            strokeLinecap="round" strokeLinejoin="round"
+            className={className}
+          >
+            {ICON_PATHS[name].map((d, i) => <path key={i} d={d} />)}
+          </svg>
+        );
+
         // Expanded reel pool showcasing ALL 3 distinct types (POV, AI Footage, Avatar) with rich gradient backgrounds
         const INITIAL_REELS = [
           {
@@ -490,6 +519,8 @@
             };
           }, [activeReel?.id]);
 
+          const jumpToReelIdRef = useRef(null);
+
           const fetchPersonalizedFeed = async () => {
             const user = userRef.current;
             if (!user || reelsPool.length === 0) return;
@@ -513,7 +544,15 @@
                 }
                 setReelsPool(ranked);
                 setIsPersonalized(data.personalized);
-                setCurrentIndex(0);
+
+                const jumpId = jumpToReelIdRef.current;
+                if (jumpId !== null) {
+                  const jumpIdx = ranked.findIndex(r => r.id === jumpId);
+                  setCurrentIndex(jumpIdx !== -1 ? jumpIdx : 0);
+                  jumpToReelIdRef.current = null;
+                } else {
+                  setCurrentIndex(0);
+                }
               }
             } catch (err) {
               console.error("Personalized feed fetch failed:", err.message);
@@ -688,16 +727,16 @@
           }
 
           const NAV_ITEMS = [
-            { key: "workspace", icon: "📁", label: "Hub" },
-            { key: "reels", icon: "⚡", label: "Reels" },
-            { key: "friends", icon: "👥", label: "Partners" },
-            { key: "buddy", icon: "🤖", label: "Buddy" },
-            { key: "likes", icon: "❤️", label: "Saved" },
-            { key: "profile", icon: "👤", label: "Profile" }
+            { key: "workspace", icon: "house", label: "Hub" },
+            { key: "reels", icon: "film", label: "Reels" },
+            { key: "friends", icon: "users", label: "Partners" },
+            { key: "buddy", icon: "chat", label: "Buddy" },
+            { key: "likes", icon: "bookmark", label: "Saved" },
+            { key: "profile", icon: "userCircle", label: "Profile" }
           ];
 
           const BottomNav = () => (
-            <div className={`grid grid-cols-6 border-t z-30 ${activeTab === "reels" ? "bg-slate-950/80 backdrop-blur-md border-white/10" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700"}`}>
+            <div className={`grid grid-cols-6 border-t z-30 ${activeTab === "reels" ? "bg-black border-white/10" : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800"}`}>
               {NAV_ITEMS.map(item => {
                 const isActive = activeTab === item.key;
                 const badge = item.key === "likes" ? likedReels.length
@@ -707,16 +746,16 @@
                   <button
                     key={item.key}
                     onClick={() => setActiveTab(item.key)}
-                    className={`relative flex flex-col items-center justify-center gap-0.5 py-2.5 text-[10px] font-semibold transition-all ${
+                    className={`relative flex flex-col items-center justify-center gap-0.5 py-3 transition-all ${
                       isActive
-                        ? (activeTab === "reels" ? "text-white" : "text-blue-600 dark:text-blue-400")
-                        : (activeTab === "reels" ? "text-white/50 hover:text-white/80" : "text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300")
+                        ? (activeTab === "reels" ? "text-white" : "text-slate-900 dark:text-white")
+                        : (activeTab === "reels" ? "text-white/40 hover:text-white/70" : "text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300")
                     }`}
                   >
-                    <span className="text-base leading-none">{item.icon}</span>
-                    <span>{item.label}</span>
+                    <Icon name={item.icon} filled={isActive} size={23} />
+                    {isActive && <span className="text-[9px] font-bold leading-none mt-0.5">{item.label}</span>}
                     {badge > 0 && (
-                      <span className="absolute top-1 right-[22%] bg-rose-500 text-white text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">{badge}</span>
+                      <span className="absolute top-1.5 right-[24%] bg-rose-500 text-white text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">{badge}</span>
                     )}
                   </button>
                 );
@@ -727,13 +766,20 @@
           return (
             <div className="flex flex-col h-screen font-sans overflow-hidden bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors">
 
-              {/* Dark mode toggle — always available */}
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="fixed top-3 right-3 z-40 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-full w-9 h-9 flex items-center justify-center text-sm shadow-sm"
-              >
-                {darkMode ? "☀️" : "🌙"}
-              </button>
+              {/* Top header — IG-style wordmark + icons, hidden on fullscreen Reels */}
+              {activeTab !== "reels" && (
+                <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 z-40 shrink-0">
+                  <h1 className="text-xl font-extrabold tracking-tight text-slate-900 dark:text-white" style={{fontFamily: "'Segoe UI', system-ui, sans-serif"}}>StudyReels</h1>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setDarkMode(!darkMode)} className="text-slate-700 dark:text-slate-200">
+                      <span className="text-base">{darkMode ? "☀️" : "🌙"}</span>
+                    </button>
+                    <button onClick={() => setActiveTab("buddy")} className="text-slate-900 dark:text-white">
+                      <Icon name="send" size={22} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* MAIN CONTENT AREA */}
               <div className="flex-1 overflow-hidden relative">
@@ -754,27 +800,24 @@
                     </div>
                   ) : (
                   <>
-                  <div className="flex items-center justify-between w-full max-w-sm mb-3 z-20 relative">
-                    <button
-                      onClick={() => setShowTagFilterMenu(!showTagFilterMenu)}
-                      className="px-3 py-1.5 rounded-full text-[11px] font-semibold bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 shadow-sm flex items-center gap-1"
-                    >
-                      🎯 {selectedTagFilter} ▾
-                    </button>
-
-                    {showTagFilterMenu && (
-                      <div className="absolute top-9 left-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-lg p-2 z-30 w-40">
-                        {["All", "Math", "Biology", "Humanities", "STEM"].map(tag => (
-                          <button
-                            key={tag}
-                            onClick={() => { setSelectedTagFilter(tag); setCurrentIndex(0); setShowTagFilterMenu(false); }}
-                            className={`w-full text-left px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all ${selectedTagFilter === tag ? "bg-slate-900 dark:bg-blue-600 text-white" : "text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
-                          >
-                            {tag}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                  <div className="w-full max-w-sm mb-3 z-20 relative flex gap-3 overflow-x-auto pb-1 px-0.5" style={{scrollbarWidth: "none"}}>
+                    {["All", "Math", "Biology", "Humanities", "STEM"].map(tag => {
+                      const isSel = selectedTagFilter === tag;
+                      return (
+                        <button
+                          key={tag}
+                          onClick={() => { setSelectedTagFilter(tag); setCurrentIndex(0); }}
+                          className="flex flex-col items-center gap-1 shrink-0"
+                        >
+                          <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg ${isSel ? "bg-gradient-to-tr from-amber-400 via-rose-500 to-fuchsia-600 p-[2px]" : "bg-slate-300 dark:bg-slate-700 p-[2px]"}`}>
+                            <div className="w-full h-full rounded-full bg-white dark:bg-slate-900 flex items-center justify-center">
+                              {tag === "All" ? "✨" : tag === "Math" ? "🧮" : tag === "Biology" ? "🧬" : tag === "Humanities" ? "📜" : "🔬"}
+                            </div>
+                          </div>
+                          <span className={`text-[9px] font-semibold ${isSel ? "text-slate-900 dark:text-white" : "text-slate-400 dark:text-slate-500"}`}>{tag}</span>
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {isPersonalized && (
@@ -799,67 +842,74 @@
                       </React.Fragment>
                     )}
 
-                    <div className="flex justify-between items-center z-10">
+                    <div className="flex justify-between items-start z-10">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[10px] font-extrabold uppercase bg-black/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 text-white tracking-widest">
-                          {activeReel.type === 'pov' ? '🔥 POV Mode' : activeReel.type === 'ai_footage' ? '🌌 AI Footage' : '🤖 Avatar Led'}
+                          {activeReel.type === 'pov' ? '🔥 POV' : activeReel.type === 'ai_footage' ? '🌌 AI Footage' : '🤖 Avatar'}
                         </span>
                         {activeReel.aiGenerated && (
                           <span className="text-[9px] font-bold uppercase bg-emerald-500/90 backdrop-blur-md px-2 py-1 rounded-full text-white tracking-wide">✨ Live AI</span>
                         )}
-                        {activeReel.trust && (
-                          <button
-                            onClick={() => setShowTrust(true)}
-                            className={`text-[9px] font-bold uppercase backdrop-blur-md px-2 py-1 rounded-full text-white tracking-wide border ${activeReel.trust.score >= 80 ? "bg-emerald-600/90 border-emerald-400/40" : activeReel.trust.score >= 50 ? "bg-amber-500/90 border-amber-300/40" : "bg-rose-600/90 border-rose-400/40"}`}
-                          >
-                            🛡️ Trust {activeReel.trust.score}
-                          </button>
-                        )}
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => { setShareStatus(null); setShowShareModal(true); }}
-                          className="p-2 rounded-full border text-xs backdrop-blur-md bg-black/30 border-white/20 text-white hover:bg-black/50 transition-all"
-                        >
-                          📤
-                        </button>
-                        <button
-                          onClick={() => handleLikeReel(activeReel)}
-                          className={`p-2 rounded-full border text-xs backdrop-blur-md transition-all ${likedReels.some(r => r.id === activeReel.id) ? "bg-rose-500 border-rose-400 text-white" : "bg-black/30 border-white/20 text-white hover:bg-black/50"}`}
-                        >
-                          ❤️
-                        </button>
                       </div>
                     </div>
 
                     {!activeReel.videoUrl && (
-                      <div className="flex flex-col items-center justify-center text-center my-auto px-4 z-10 space-y-4">
+                      <div className="flex flex-col items-center justify-center text-center my-auto px-5 z-10 space-y-4">
                         {activeReel.type === 'avatar' && (
-                          <div className="w-16 h-16 bg-white/20 border-2 border-white/40 rounded-full flex items-center justify-center text-2xl shadow-lg mb-2">
+                          <div className="w-16 h-16 bg-white/20 border-2 border-white/40 rounded-full flex items-center justify-center text-2xl shadow-lg mb-1">
                             👩‍🏫
                           </div>
                         )}
-                        <p className="text-base md:text-lg font-bold leading-relaxed drop-shadow-md">
+                        <p className="text-lg md:text-xl font-bold leading-snug drop-shadow-md text-white">
                           "{activeReel.script}"
                         </p>
                       </div>
                     )}
-                    {activeReel.videoUrl && (
-                      <div className="my-auto z-10 px-2">
-                        <p className="text-xs font-bold text-white/90 drop-shadow-md text-center">{activeReel.topic}</p>
-                      </div>
-                    )}
 
-                    <div className="flex items-end justify-between z-10 pb-2">
-                      <div className="flex gap-2">
-                        <button onClick={() => setShowSource(true)} className="bg-black/30 hover:bg-black/50 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all">📄 Source</button>
-                        {activeReel.description && (
-                          <button onClick={() => setShowExplain(true)} className="bg-black/30 hover:bg-black/50 backdrop-blur-md border border-white/20 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all">📖 Explain</button>
-                        )}
+                    {/* Right-side action rail — Instagram Reels style */}
+                    <div className="absolute right-3 bottom-24 z-20 flex flex-col items-center gap-5">
+                      <button onClick={() => handleLikeReel(activeReel)} className="flex flex-col items-center gap-1">
+                        <Icon name="heart" filled={likedReels.some(r => r.id === activeReel.id)} size={27} className={likedReels.some(r => r.id === activeReel.id) ? "text-rose-500 drop-shadow" : "text-white drop-shadow"} />
+                      </button>
+                      {activeReel.description && (
+                        <button onClick={() => setShowExplain(true)} className="flex flex-col items-center gap-1 text-white">
+                          <Icon name="bookmark" size={26} className="drop-shadow" />
+                          <span className="text-[8px] font-bold">Explain</span>
+                        </button>
+                      )}
+                      <button onClick={() => setShowSource(true)} className="flex flex-col items-center gap-1 text-white">
+                        <Icon name="document" size={25} className="drop-shadow" />
+                        <span className="text-[8px] font-bold">Source</span>
+                      </button>
+                      {activeReel.trust && (
+                        <button onClick={() => setShowTrust(true)} className="flex flex-col items-center gap-1 text-white">
+                          <Icon name="shield" filled={activeReel.trust.score >= 80} size={26} className={`drop-shadow ${activeReel.trust.score >= 80 ? "text-emerald-400" : activeReel.trust.score >= 50 ? "text-amber-400" : "text-rose-400"}`} />
+                          <span className="text-[8px] font-bold">{activeReel.trust.score}</span>
+                        </button>
+                      )}
+                      <button onClick={() => { setShareStatus(null); setShowShareModal(true); }} className="flex flex-col items-center gap-1 text-white">
+                        <Icon name="send" size={25} className="drop-shadow" />
+                      </button>
+                      <div className="flex flex-col gap-2 mt-1">
+                        <button onClick={() => { if (currentIndex > 0) setCurrentIndex(currentIndex - 1); }} disabled={currentIndex === 0} className="bg-black/30 hover:bg-black/50 p-1.5 rounded-full disabled:opacity-20 text-white transition-all">
+                          <Icon name="chevronUp" size={18} />
+                        </button>
+                        <button onClick={() => { if (currentIndex < filteredReels.length - 1) setCurrentIndex(currentIndex + 1); }} disabled={currentIndex >= filteredReels.length - 1} className="bg-black/30 hover:bg-black/50 p-1.5 rounded-full disabled:opacity-20 text-white transition-all">
+                          <Icon name="chevronDown" size={18} />
+                        </button>
                       </div>
-                      <div className="flex flex-col gap-2">
-                        <button onClick={() => { if (currentIndex > 0) setCurrentIndex(currentIndex - 1); }} disabled={currentIndex === 0} className="bg-black/40 hover:bg-black/60 p-3 rounded-full border border-white/20 disabled:opacity-30 text-white shadow-sm">⬆️</button>
-                        <button onClick={() => { if (currentIndex < filteredReels.length - 1) setCurrentIndex(currentIndex + 1); }} disabled={currentIndex >= filteredReels.length - 1} className="bg-black/40 hover:bg-black/60 p-3 rounded-full border border-white/20 disabled:opacity-30 text-white shadow-sm">⬇️</button>
+                    </div>
+
+                    {/* Bottom scrim for caption legibility — always present, not just on video */}
+                    <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/60 to-transparent z-[5] pointer-events-none" />
+
+                    {/* Bottom-left caption block — Instagram Reels style */}
+                    <div className="relative z-10 pr-14">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-400 via-rose-500 to-fuchsia-600 flex items-center justify-center text-[11px] font-bold text-white shrink-0">
+                          {(activeReel.semanticTags && activeReel.semanticTags[0] || "?")[0]}
+                        </div>
+                        <span className="text-xs font-bold text-white drop-shadow-md truncate">{activeReel.topic}</span>
                       </div>
                     </div>
 
@@ -1028,7 +1078,7 @@
 
                   {activeTab === "friends" && (
                     <div className="space-y-5">
-                      <div className="bg-gradient-to-r from-amber-500 to-orange-600 rounded-2xl p-4 text-white shadow-sm">
+                      <div className="bg-orange-600 rounded-2xl p-4 text-white shadow-sm">
                         <h3 className="text-xs font-bold uppercase tracking-wider mb-1">⚡ Quick Match</h3>
                         {buddySuggestions.length > 0 ? (
                           <div className="flex items-center justify-between mt-2">
@@ -1193,10 +1243,21 @@
                       ) : (
                         <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
                           {likedReels.map(r => (
-                            <div key={r.id} className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-xl">
-                              <span className="text-[9px] text-blue-600 dark:text-blue-400 uppercase font-bold block">{r.topic}</span>
-                              <p className="text-xs text-slate-800 dark:text-slate-200 truncate">{r.script}</p>
-                            </div>
+                            <button
+                              key={r.id}
+                              onClick={() => {
+                                jumpToReelIdRef.current = r.id;
+                                setSelectedTagFilter("All");
+                                setActiveTab("reels");
+                              }}
+                              className="w-full text-left bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 p-3 rounded-xl transition-all flex items-center justify-between gap-2"
+                            >
+                              <div className="min-w-0">
+                                <span className="text-[9px] text-blue-600 dark:text-blue-400 uppercase font-bold block">{r.topic}</span>
+                                <p className="text-xs text-slate-800 dark:text-slate-200 line-clamp-2">{r.script}</p>
+                              </div>
+                              <Icon name="chevronDown" size={16} className="shrink-0 -rotate-90 text-slate-400" />
+                            </button>
                           ))}
                         </div>
                       )}
